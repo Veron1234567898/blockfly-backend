@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Dodge Sandbox - Babylon.js</title>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+        }
+        #renderCanvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            outline: none;
+            background: #222;
+        }
+        .overlay {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 2rem;
+            text-shadow: 0 2px 8px #000a;
+            z-index: 10;
+        }
+        /* Main Menu Overlay Styling */
+        #mainMenuOverlay {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(20, 20, 30, 0.92);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            backdrop-filter: blur(2px);
+            animation: fadeInMenu 0.7s, popInMenu 0.7s cubic-bezier(.23,1.12,.72,1.01);
+        }
+        @keyframes fadeInMenu {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes popInMenu {
+            0% { transform: scale(0.85); }
+            80% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        #mainMenuOverlay > div {
+            color: #fff;
+            font-size: 3rem;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 8px #000a;
+            letter-spacing: 2px;
+            opacity: 0;
+            transform: translateY(-40px);
+            animation: slideFadeInTitle 1s 0.2s forwards;
+        }
+        @keyframes slideFadeInTitle {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        #mainMenuOverlay button {
+            padding: 18px 48px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 16px #0007;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            animation: popInMenu 0.7s cubic-bezier(.23,1.12,.72,1.01);
+        }
+        #mainMenuOverlay button:active {
+            transform: scale(0.96);
+            box-shadow: 0 1px 6px #0005;
+        }
+        #playBtn {
+            background: linear-gradient(90deg, #43a047 60%, #66bb6a 100%);
+            color: #fff;
+        }
+        #playBtn:hover {
+            background: linear-gradient(90deg, #388e3c 60%, #43a047 100%);
+            transform: scale(1.05);
+        }
+        #planesBtn {
+            background: linear-gradient(90deg, #1976d2 60%, #64b5f6 100%);
+            color: #fff;
+        }
+        #planesBtn:hover {
+            background: linear-gradient(90deg, #1565c0 60%, #1976d2 100%);
+            transform: scale(1.05);
+        }
+        #refreshBtn {
+            background: linear-gradient(90deg, #b71c1c 60%, #ef5350 100%);
+            color: #fff;
+        }
+        #refreshBtn:hover {
+            background: linear-gradient(90deg, #8a1313 60%, #b71c1c 100%);
+            transform: scale(1.05);
+        }
+        /* Plane Selection Modal Styling */
+        #planeSelectModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(20, 20, 30, 0.92);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            backdrop-filter: blur(2px);
+            animation: fadeInMenu 0.7s, popInMenu 0.7s cubic-bezier(.23,1.12,.72,1.01);
+        }
+        #planeSelectModal > div:first-child {
+            color: #fff;
+            font-size: 2.2rem;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin-bottom: 32px;
+            text-shadow: 0 2px 8px #000a;
+            opacity: 0;
+            transform: translateY(-30px);
+            animation: slideFadeInTitle 1s 0.2s forwards;
+        }
+        #planeOptions {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+        .planeOptionBtn {
+            padding: 18px 36px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            background: #2196f3;
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #0005;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s, box-shadow 0.4s, border 0.3s;
+            position: relative;
+            outline: none;
+        }
+        .planeOptionBtn[data-plane="jet"] {
+            background: #e53935;
+        }
+        .planeOptionBtn[data-plane="stunt"] {
+            background: #43a047;
+        }
+        .planeOptionBtn:hover {
+            background: #1565c0;
+            transform: scale(1.12) rotate(-2deg);
+            box-shadow: 0 4px 24px #2196f3cc, 0 0 0 4px #fff2;
+            border: 2px solid #fff;
+            animation: glowBorder 1.2s infinite alternate;
+        }
+        @keyframes glowBorder {
+            from { box-shadow: 0 4px 24px #2196f3cc, 0 0 0 4px #fff2; }
+            to { box-shadow: 0 4px 32px #fff, 0 0 0 8px #2196f388; }
+        }
+        #closePlaneSelect {
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            background: #444;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        #closePlaneSelect:hover {
+            background: #222;
+            transform: scale(1.05);
+        }
+        /* Mobile Controls Styling */
+        #mobileControls {
+            display: none;
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 500;
+            flex-direction: row;
+            gap: 24px;
+            pointer-events: none;
+        }
+        .mobile-btn {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #222 60%, #444 100%);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            font-size: 2rem;
+            box-shadow: 0 2px 12px #0007;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.92;
+            pointer-events: auto;
+            transition: background 0.2s, transform 0.2s;
+            user-select: none;
+        }
+        .mobile-btn:active {
+            background: #1976d2;
+            transform: scale(0.95);
+        }
+        #mobileControls .mobile-btn-barrel {
+            background: linear-gradient(135deg, #e53935 60%, #ff7043 100%);
+            font-size: 2.2rem;
+        }
+        @media (max-width: 900px) {
+            #mobileControls { display: flex; }
+        }
+        /* Joystick Styling */
+        #joystickContainer {
+            display: none;
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            width: 200px;
+            height: 200px;
+            z-index: 501;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        #joystickBase {
+            width: 160px;
+            height: 160px;
+            background: rgba(80,80,100,0.25);
+            border-radius: 50%;
+            border: 3px solid #1976d2;
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            pointer-events: auto;
+        }
+        #joystickKnob {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #1976d2 60%, #64b5f6 100%);
+            border-radius: 50%;
+            position: absolute;
+            left: 40px;
+            top: 40px;
+            box-shadow: 0 2px 12px #0007;
+            pointer-events: auto;
+            touch-action: none;
+            transition: background 0.2s;
+        }
+        #mobileBarrel {
+            position: fixed;
+            bottom: 56px;
+            right: 40px;
+            z-index: 502;
+            width: 72px;
+            height: 72px;
+            font-size: 2.2rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e53935 60%, #ff7043 100%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 12px #0007;
+            opacity: 0.92;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.2s;
+        }
+        #mobileBarrel:active {
+            background: #b71c1c;
+            transform: scale(0.95);
+        }
+        @media (max-width: 900px) {
+            #joystickContainer { display: flex; }
+            #mobileBarrel { display: flex; }
+        }
+        /* Throttle Slider Styling */
+        #throttleContainer {
+            display: none;
+            position: fixed;
+            right: 32px;
+            bottom: 140px;
+            width: 60px;
+            height: 220px;
+            z-index: 503;
+            align-items: center;
+            justify-content: flex-end;
+            flex-direction: column;
+            pointer-events: none;
+        }
+        #throttleTrack {
+            width: 18px;
+            height: 180px;
+            background: linear-gradient(180deg, #bbb 0%, #444 100%);
+            border-radius: 12px;
+            position: relative;
+            margin-bottom: 12px;
+            pointer-events: auto;
+        }
+        #throttleKnob {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #43a047 60%, #66bb6a 100%);
+            border-radius: 50%;
+            position: absolute;
+            left: -13px;
+            top: 136px;
+            box-shadow: 0 2px 12px #0007;
+            pointer-events: auto;
+            touch-action: none;
+            transition: background 0.2s;
+        }
+        #throttleLabel {
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 8px #000a;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        @media (max-width: 900px) {
+            #throttleContainer { display: flex; }
+        }
+        #consoleOutput {
+            position: fixed;
+            bottom: 200px;
+            left: 24px;
+            width: 320px;
+            max-width: 90vw;
+            background: rgba(30,30,40,0.92);
+            border-radius: 12px;
+            box-shadow: 0 2px 16px #0008;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            padding: 12px;
+            color: #fff;
+        }
+        .console-line {
+            margin: 2px 0;
+            word-wrap: break-word;
+        }
+        .console-error { color: #ff6b6b; }
+        .console-warn { color: #ffd93d; }
+        .console-info { color: #4dacff; }
+    </style>
+</head>
+<body>
+    <div id="consoleOutput"></div>
+    <div class="overlay">3D Dodge Sandbox</div>
+    <canvas id="renderCanvas" tabindex="1"></canvas>
+    <div id="gameOverOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(20,20,30,0.85); z-index:100; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="color:#fff; font-size:3rem; font-family:'Segoe UI',Arial,sans-serif; margin-bottom:30px; text-shadow:0 2px 8px #000a;">Game Over</div>
+        <button id="gameOverRefreshBtn" style="padding:18px 48px; font-size:1.5rem; border:none; border-radius:8px; background:#b71c1c; color:#fff; cursor:pointer; box-shadow:0 2px 8px #0005;">Refresh</button>
+    </div>
+    <div id="mainMenuOverlay" style="display:flex; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(20,20,30,0.92); z-index:200; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="color:#fff; font-size:3rem; font-family:'Segoe UI',Arial,sans-serif; margin-bottom:40px; text-shadow:0 2px 8px #000a;">3D Dodge Sandbox</div>
+        <button id="playBtn" style="padding:18px 48px; font-size:1.5rem; border:none; border-radius:8px; background:#43a047; color:#fff; cursor:pointer; margin-bottom:24px; box-shadow:0 2px 8px #0005;">Play</button>
+        <button id="planesBtn" style="padding:14px 36px; font-size:1.2rem; border:none; border-radius:8px; background:#1976d2; color:#fff; cursor:pointer; margin-bottom:24px; box-shadow:0 2px 8px #0005;">Planes</button>
+        <button id="refreshBtn" style="padding:12px 32px; font-size:1.1rem; border:none; border-radius:8px; background:#b71c1c; color:#fff; cursor:pointer; box-shadow:0 2px 8px #0005;">Refresh</button>
+        
+    </div>
+    <!-- Plane Selection Modal -->
+    <div id="planeSelectModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(20,20,30,0.92); z-index:300; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="color:#fff; font-size:2.2rem; font-family:'Segoe UI',Arial,sans-serif; margin-bottom:32px; text-shadow:0 2px 8px #000a;">Select Your Plane</div>
+        <div id="planeOptions" style="display:flex; gap:32px; margin-bottom:32px;">
+            <button class="planeOptionBtn" data-plane="classic" style="padding:18px 36px; font-size:1.2rem; border:none; border-radius:8px; background:#2196f3; color:#fff; cursor:pointer;">Classic</button>
+            <button class="planeOptionBtn" data-plane="jet" style="padding:18px 36px; font-size:1.2rem; border:none; border-radius:8px; background:#e53935; color:#fff; cursor:pointer;">Jet</button>
+            <button class="planeOptionBtn" data-plane="stunt" style="padding:18px 36px; font-size:1.2rem; border:none; border-radius:8px; background:#43a047; color:#fff; cursor:pointer;">Stunt</button>
+        </div>
+        <button id="closePlaneSelect" style="padding:12px 32px; font-size:1.1rem; border:none; border-radius:8px; background:#444; color:#fff; cursor:pointer;">Close</button>
+    </div>
+    <div id="joystickContainer">
+        <div id="joystickBase"></div>
+        <div id="joystickKnob"></div>
+    </div>
+    <button class="mobile-btn mobile-btn-barrel" id="mobileBarrel" title="Barrel Roll">&#8634;</button>
+    <div id="mobileControls">
+        <button class="mobile-btn" id="mobileLeft" title="Left">&#8592;</button>
+        <button class="mobile-btn" id="mobileUp" title="Up">&#8593;</button>
+        <button class="mobile-btn" id="mobileDown" title="Down">&#8595;</button>
+        <button class="mobile-btn" id="mobileRight" title="Right">&#8594;</button>
+    </div>
+    <div id="throttleContainer">
+        <div id="throttleLabel">Throttle</div>
+        <div id="throttleTrack">
+            <div id="throttleKnob"></div>
+        </div>
+    </div>
+    <div id="chatOverlay" style="position:fixed; bottom:24px; right:24px; width:320px; max-width:90vw; background:rgba(30,30,40,0.92); border-radius:12px; box-shadow:0 2px 16px #0008; z-index:9999; display:flex; flex-direction:column;">
+        <div id="chatMessages" style="flex:1; min-height:120px; max-height:220px; overflow-y:auto; padding:12px; color:#fff; font-family:'Segoe UI',Arial,sans-serif; font-size:1rem;"></div>
+        <div style="display:flex; border-top:1px solid #333;">
+            <input id="chatInput" type="text" placeholder="Type a message..." style="flex:1; padding:10px; border:none; border-radius:0 0 0 12px; background:#222; color:#fff; font-size:1rem; outline:none;">
+            <button id="chatSendBtn" style="padding:10px 18px; border:none; border-radius:0 0 12px 0; background:#1976d2; color:#fff; font-size:1rem; cursor:pointer;">Send</button>
+        </div>
+    </div>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="main.js"></script>
+    <script>
+    window.addEventListener('DOMContentLoaded', function() {
+        const mainMenu = document.getElementById('mainMenuOverlay');
+        const playBtn = document.getElementById('playBtn');
+        const planesBtn = document.getElementById('planesBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const renderCanvas = document.getElementById('renderCanvas');
+        const planeSelectModal = document.getElementById('planeSelectModal');
+        const closePlaneSelect = document.getElementById('closePlaneSelect');
+        const planeOptionBtns = document.querySelectorAll('.planeOptionBtn');
+        let selectedPlane = localStorage.getItem('selectedPlane') || 'classic';
+
+        function updatePlanesBtn() {
+            planesBtn.textContent = 'Planes (' + selectedPlane.charAt(0).toUpperCase() + selectedPlane.slice(1) + ')';
+        }
+        updatePlanesBtn();
+
+        playBtn.onclick = function() {
+            mainMenu.style.display = 'none';
+            renderCanvas.focus();
+        };
+        planesBtn.onclick = function() {
+            planeSelectModal.style.display = 'flex';
+        };
+        closePlaneSelect.onclick = function() {
+            planeSelectModal.style.display = 'none';
+        };
+        planeOptionBtns.forEach(btn => {
+            btn.onclick = function() {
+                selectedPlane = btn.getAttribute('data-plane');
+                localStorage.setItem('selectedPlane', selectedPlane);
+                updatePlanesBtn();
+                planeSelectModal.style.display = 'none';
+            };
+        });
+        refreshBtn.onclick = function() {
+            window.location.reload();
+        };
+        document.getElementById('gameOverRefreshBtn').onclick = function() {
+            window.location.reload();
+        };
+        // Mobile device detection
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        if (isMobile()) {
+            document.getElementById('joystickContainer').style.display = 'flex';
+            document.getElementById('mobileBarrel').style.display = 'flex';
+            document.getElementById('throttleContainer').style.display = 'flex';
+        }
+        // Virtual Joystick Implementation
+        let joystickActive = false;
+        let joystickCenter = { x: 0, y: 0 };
+        let joystickRadius = 80;
+        let knob = document.getElementById('joystickKnob');
+        let base = document.getElementById('joystickBase');
+        function setNormalizedFromJoystick(dx, dy) {
+            // Clamp to [-1, 1]
+            let nx = Math.max(-1, Math.min(1, dx / joystickRadius));
+            let ny = Math.max(-1, Math.min(1, -dy / joystickRadius)); // Invert Y axis
+            window.normalizedX = nx;
+            window.normalizedY = ny;
+            console.log('Joystick:', nx, ny);
+        }
+        function resetJoystick() {
+            knob.style.left = '40px';
+            knob.style.top = '40px';
+            setNormalizedFromJoystick(0, 0);
+        }
+        base.addEventListener('touchstart', function(e) {
+            joystickActive = true;
+            const rect = base.getBoundingClientRect();
+            joystickCenter.x = rect.left + rect.width / 2;
+            joystickCenter.y = rect.top + rect.height / 2;
+            e.preventDefault();
+        }, { passive: false });
+        base.addEventListener('touchmove', function(e) {
+            if (!joystickActive) return;
+            const touch = e.touches[0];
+            let dx = touch.clientX - joystickCenter.x;
+            let dy = touch.clientY - joystickCenter.y;
+            // Clamp to joystick radius
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > joystickRadius) {
+                dx = dx * joystickRadius / dist;
+                dy = dy * joystickRadius / dist;
+            }
+            knob.style.left = (40 + dx) + 'px';
+            knob.style.top = (40 + dy) + 'px';
+            setNormalizedFromJoystick(dx, dy);
+            e.preventDefault();
+        }, { passive: false });
+        base.addEventListener('touchend', function(e) {
+            joystickActive = false;
+            resetJoystick();
+            e.preventDefault();
+        }, { passive: false });
+        // Barrel roll button
+        document.getElementById('mobileBarrel').ontouchstart = () => {
+            document.getElementById('renderCanvas').dispatchEvent(new MouseEvent('dblclick'));
+        };
+        // Ensure joystick resets on orientation change
+        window.addEventListener('orientationchange', resetJoystick);
+        resetJoystick();
+        // Throttle slider logic
+        let throttleActive = false;
+        let throttleTrack = document.getElementById('throttleTrack');
+        let throttleKnob = document.getElementById('throttleKnob');
+        let throttleRect = null;
+        window.mobileThrottle = 0.5;
+        function setThrottleFromTouch(y) {
+            let relY = y - throttleRect.top;
+            relY = Math.max(0, Math.min(relY, throttleRect.height));
+            let t = 1 - (relY / throttleRect.height); // 0 (bottom) to 1 (top)
+            window.mobileThrottle = t;
+            throttleKnob.style.top = (relY - 22) + 'px';
+        }
+        throttleTrack.addEventListener('touchstart', function(e) {
+            throttleActive = true;
+            throttleRect = throttleTrack.getBoundingClientRect();
+            setThrottleFromTouch(e.touches[0].clientY);
+            e.preventDefault();
+        }, { passive: false });
+        throttleTrack.addEventListener('touchmove', function(e) {
+            if (!throttleActive) return;
+            setThrottleFromTouch(e.touches[0].clientY);
+            e.preventDefault();
+        }, { passive: false });
+        throttleTrack.addEventListener('touchend', function(e) {
+            throttleActive = false;
+            e.preventDefault();
+        }, { passive: false });
+        // Set initial throttle knob position
+        setTimeout(() => {
+            throttleRect = throttleTrack.getBoundingClientRect();
+            setThrottleFromTouch(throttleRect.top + throttleRect.height/2);
+        }, 200);
+    });
+    </script>
+</body>
+</html>

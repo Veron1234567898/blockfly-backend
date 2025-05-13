@@ -1,0 +1,74 @@
+{
+  "fa9ltydev_ils": {
+    "password": "$2b$10$3kWo9cZkwcFhbDuKTnIYBOJZbcLP4ZW.rJHyDymTQLb6qiP4cet7O",
+    "badges": []
+  },
+  "sadimcrying": {
+    "password": "$2b$10$j9ugknUUeT1/3iLWUxSIseR/Mm.mTyX/nT/YbH6x/SmBovKNaVr7i"
+  },
+  "admin": {
+    "password": "$2b$10$H0nFz8lZDRI6pYWtM1QupuLUt3DG3tEtq80YI5jRQS2of9VOaB64q",
+    "role": "admin",
+    "highScore": 0,
+    "badges": [
+      "trophy.png"
+    ],
+    "banned": false,
+    "bannedFromChat": false
+  },
+  "Test": {
+    "password": "$2b$10$I1wJeHk9Dvlik/JLAcI/V.fsA6v2RyqKS51Vr8C8uyODDjHo0mInC",
+    "badges": [],
+    "role": "user",
+    "bannedFromChat": false,
+    "bannedFromSite": false
+  },
+  "Testuser": {
+    "password": "$2b$10$b6Kh1FZbdoPE6jzxU1.Yy.FuWlubplYflSg8.Ekh.QAqmZJFV.kLq",
+    "badges": [],
+    "role": "user",
+    "bannedFromChat": false,
+    "bannedFromSite": false
+  },
+  "Testuser1": {
+    "password": "$2b$10$mUPPt5BwRBvDpDNq/MxJfO1mEsyHr8zr5WJMsnlFXaT.OZ7oeMsF2",
+    "badges": [],
+    "role": "user",
+    "bannedFromChat": false,
+    "bannedFromSite": false
+  },
+  "Testuser12": {
+    "password": "$2b$10$8Phn66qV/WoTzQxnTpdepe4.d6OTN2Yd56Rpe64CrCOpa.s5YWHsG",
+    "badges": [],
+    "bannedFromChat": false,
+    "bannedFromSite": false
+  },
+  "CheezShawarma12": {
+    "password": "$2b$10$5GJ.ptzb9heHhaRK5XVtmu/fS6W42zSyBfPKPix09eDA5pEVuUIJa",
+    "badges": [],
+    "role": "user",
+    "bannedFromChat": false,
+    "bannedFromSite": false
+  },
+  "boi": {
+    "password": "$2b$10$EOhyGhKJ4z6Tu2vZdDdPKuegBl.3zlFPB4Eh.UUFGTX5P.HQkrgqu",
+    "badges": [],
+    "role": "user",
+    "bannedFromChat": false,
+    "bannedFromSite": false
+  },
+  "aHMAD": {
+    "password": "$2b$10$6cw.75T4lMmm9v/vHLiGru6ys41RQmWc6PaJymNRFCohxlZbCREha",
+    "badges": [],
+    "role": "user",
+    "bannedFromChat": false,
+    "bannedFromSite": true
+  },
+  "Gg": {
+    "password": "$2b$10$Vwt/L2D912pEF8BIxcKmse9CJyi8OCSvVaojFBeGGqCvvJgyMauL.",
+    "badges": [],
+    "role": "user",
+    "bannedFromChat": false,
+    "bannedFromSite": false
+  }
+}
